@@ -1,0 +1,35 @@
+version: 0.2
+env:
+  variables:
+    CONTAINER_NAME: "myapp-container"
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - cd src
+      - npm install --no-audit --no-fund
+  pre_build:
+    commands:
+      - cd ..
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - REPOSITORY_URI="$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY"
+      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+      - IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}"
+      - if [ -z "$IMAGE_TAG" ]; then IMAGE_TAG="latest"; fi
+  build:
+    commands:
+      - cd src && npm test -- --coverage && cd ..
+      - docker build --pull -t "$REPOSITORY_URI:$IMAGE_TAG" .
+  post_build:
+    commands:
+      - docker push "$REPOSITORY_URI:$IMAGE_TAG"
+      - printf '{"ImageURI":"%s"}' "$REPOSITORY_URI:$IMAGE_TAG" > imageDetail.json
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
+artifacts:
+  files:
+    - imageDetail.json
+    - imagedefinitions.json
+    - appspec.yml
+    - taskdef.json
+  discard-paths: yes
