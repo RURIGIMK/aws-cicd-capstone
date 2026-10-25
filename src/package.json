@@ -1,0 +1,22 @@
+{
+  "name": "aws-cicd-capstone",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sample app for an end-to-end AWS CI/CD capstone",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "jest --runInBand",
+    "test:ci": "jest --ci --coverage --runInBand"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
