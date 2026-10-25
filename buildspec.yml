@@ -7,11 +7,10 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - cd src
-      - npm install --no-audit --no-fund
+      - cd "$CODEBUILD_SRC_DIR/src" && npm install --no-audit --no-fund
   pre_build:
     commands:
-      - cd ..
+      - test -n "$ECR_REPOSITORY" || (echo "ECR_REPOSITORY environment variable is required" && exit 1)
       - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
       - REPOSITORY_URI="$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY"
       - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
@@ -19,17 +18,18 @@ phases:
       - if [ -z "$IMAGE_TAG" ]; then IMAGE_TAG="latest"; fi
   build:
     commands:
-      - cd src && npm test -- --coverage && cd ..
-      - docker build --pull -t "$REPOSITORY_URI:$IMAGE_TAG" .
+      - cd "$CODEBUILD_SRC_DIR/src" && npm test -- --coverage
+      - cd "$CODEBUILD_SRC_DIR" && docker build --pull -t "$REPOSITORY_URI:$IMAGE_TAG" .
   post_build:
     commands:
       - docker push "$REPOSITORY_URI:$IMAGE_TAG"
-      - printf '{"ImageURI":"%s"}' "$REPOSITORY_URI:$IMAGE_TAG" > imageDetail.json
-      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
+      - printf '{"ImageURI":"%s"}' "$REPOSITORY_URI:$IMAGE_TAG" > "$CODEBUILD_SRC_DIR/imageDetail.json"
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$IMAGE_TAG" > "$CODEBUILD_SRC_DIR/imagedefinitions.json"
 artifacts:
   files:
     - imageDetail.json
     - imagedefinitions.json
-    - appspec.yml
+    - appspec.yaml
     - taskdef.json
+  base-directory: .
   discard-paths: yes
