@@ -1,8 +1,8 @@
 {
-  "family": "myapp-task",
+  "family": "rkm-cp2-2026-task",
   "networkMode": "awsvpc",
-  "executionRoleArn": "REPLACE_WITH_ECS_TASK_EXECUTION_ROLE_ARN",
-  "taskRoleArn": "REPLACE_WITH_ECS_TASK_ROLE_ARN",
+  "executionRoleArn": "arn:aws:iam::325657596892:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::325657596892:role/rkm-cp2-2026-AppTaskRole",
   "containerDefinitions": [
     {
       "name": "myapp-container",
@@ -28,8 +28,8 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/myapp-task",
-          "awslogs-region": "REPLACE_WITH_AWS_REGION",
+          "awslogs-group": "/ecs/rkm-cp2-2026",
+          "awslogs-region": "eu-west-1",
           "awslogs-stream-prefix": "ecs"
         }
       },
